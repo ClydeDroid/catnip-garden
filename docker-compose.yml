@@ -1,0 +1,59 @@
+# Docker Compose file Reference (https://docs.docker.com/compose/compose-file/)
+version: "3.7"
+
+services:
+  db:
+    image: postgres:12
+    restart: always
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    volumes:
+      - db-data:/var/lib/postgresql
+    networks:
+      - backend
+
+  api:
+    image: clydedroid/catnip-garden:api
+    build:
+      context: api
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    ports:
+      - "4000:4000"
+    restart: always
+    depends_on:
+      - db
+    volumes:
+      - "${DIR}/api:/app"
+    networks:
+      - backend
+      - frontend
+
+  ui:
+    image: clydedroid/catnip-garden:ui
+    build:
+      context: ui
+    environment:
+      - DANGEROUSLY_DISABLE_HOST_CHECK=true
+    ports:
+      - "3000:3000"
+    restart: always
+    depends_on:
+      - api
+    volumes:
+      - "${DIR}/ui:/app"
+      - node_modules:/app/node_modules
+    networks:
+      - frontend
+
+volumes:
+  db-data:
+  node_modules:
+
+networks:
+  backend:
+  frontend:
